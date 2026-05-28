@@ -6,7 +6,7 @@ in a coordinate-embedded space.
 
 **Status:** work in progress. Public from day one. Updated weekly.
 
-## Thesis (one sentence)
+## Thesis
 
 The relational structure of activations across reasoning steps — not their
 coordinate values — carries the reasoning load in transformer language models.
