@@ -84,14 +84,48 @@ doing.
 
 ---
 
-## 3. Background and related work [PLACEHOLDER]
+## 3. Background and related work [PLACEHOLDER — draft Thursday 4]
 
-To be drafted Thursday 3 or 4. Will cover:
-- Mechanistic interpretability lineage (probing methods, activation
-  patching, sparse autoencoders).
-- Existing relational-reasoning work in ML (Relation Networks, ReCogLab,
-  related lines) and how the present program differs.
+This section situates the program in the existing ML literature.
+All citations will be verified against primary sources before inclusion.
 
+### 3.1 Mechanistic interpretability
+
+The program sits within the mechanistic interpretability tradition:
+understanding what computations a trained neural network implements,
+at the level of individual components. Key prior work to cover:
+
+- Probing methods: linear probes on transformer activations to recover
+  linguistic and factual structure. [citations to be verified]
+- Activation patching: causal intervention methods for identifying
+  which components mediate specific behaviors. [citations to be verified]
+- Sparse autoencoders and superposition: recent Anthropic work on
+  decomposing activation space into interpretable features.
+  [citations to be verified]
+
+### 3.2 Relational reasoning in ML
+
+Prior work that uses "relational" framing — and how the present program
+differs:
+
+- Santoro et al. (2017), Relation Networks: adds explicit
+  relation-comparison modules to neural networks. We modify nothing
+  in the network — we probe existing activations.
+- ReCogLab (DeepMind, 2024): framework for testing relational reasoning
+  in LLMs. Related but different methodology.
+- Key distinction: prior work asks "can we make models reason
+  relationally?" We ask "do existing models already represent relational
+  structure internally, and does it matter?"
+
+### 3.3 Biological convergent motivation
+
+Predictive coding (Rao & Ballard, 1999 — to be verified) independently
+motivates the relational-over-coordinate bet: in predictive coding
+frameworks, what matters is the prediction error signal (a relation
+between layers), not the absolute activation value. This is a convergent
+motivation, not a load-bearing premise.
+
+*Full draft of Section 3 scheduled for Thursday 4.*
 ---
 
 ## 4. The program [PLACEHOLDER]
