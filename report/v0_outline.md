@@ -84,48 +84,87 @@ doing.
 
 ---
 
-## 3. Background and related work [PLACEHOLDER — draft Thursday 4]
+## 3. Background and related work
 
-This section situates the program in the existing ML literature.
-All citations will be verified against primary sources before inclusion.
+All citations in this section were verified against primary sources
+during Thursday 4 (2026-06-11).
 
 ### 3.1 Mechanistic interpretability
 
-The program sits within the mechanistic interpretability tradition:
-understanding what computations a trained neural network implements,
-at the level of individual components. Key prior work to cover:
+This program sits within the mechanistic interpretability tradition:
+the project of reverse-engineering what computations a trained neural
+network implements, at the level of its internal components.
 
-- Probing methods: linear probes on transformer activations to recover
-  linguistic and factual structure. [citations to be verified]
-- Activation patching: causal intervention methods for identifying
-  which components mediate specific behaviors. [citations to be verified]
-- Sparse autoencoders and superposition: recent Anthropic work on
-  decomposing activation space into interpretable features.
-  [citations to be verified]
+The foundational methodology we rely on is **probing**. Alain & Bengio
+(2016) introduced linear classifier probes: training a simple linear
+classifier on the activations of an intermediate layer to measure how
+much task-relevant information that layer encodes (arXiv:1610.01644).
+The probe's performance is the signal; the probe itself does not modify
+the network. This is the core methodology of milestone 1.
 
-### 3.2 Relational reasoning in ML
+A second relevant method is **activation patching** (also called causal
+tracing), introduced in its modern form by Meng et al. (2022). Activation
+patching works by replacing specific internal activations with cached
+activations from a different input, and observing whether the output
+changes — establishing causal, not merely correlational, relationships
+between internal components and model behavior. We do not use activation
+patching in milestone 1, but it is the natural next step if the probe
+finds a relational substructure worth investigating causally.
 
-Prior work that uses "relational" framing — and how the present program
-differs:
+A third relevant line of work is **sparse autoencoders** for decomposing
+activation space. Cunningham et al. (2023) showed that sparse
+autoencoders trained on transformer residual streams find highly
+interpretable features (arXiv:2309.08600). Elhage et al. (2022) provided
+the theoretical framing: transformer activations exist in superposition,
+with many features compressed into a lower-dimensional space (Transformer
+Circuits Thread, 2022). Sparse autoencoders are a tool for decomposing
+this superposition. We note this line of work as context; our probe
+approach is simpler and does not require training a sparse autoencoder.
 
-- Santoro et al. (2017), Relation Networks: adds explicit
-  relation-comparison modules to neural networks. We modify nothing
-  in the network — we probe existing activations.
-- ReCogLab (DeepMind, 2024): framework for testing relational reasoning
-  in LLMs. Related but different methodology.
-- Key distinction: prior work asks "can we make models reason
-  relationally?" We ask "do existing models already represent relational
-  structure internally, and does it matter?"
+### 3.2 Relational reasoning in ML — and how this program differs
+
+The term "relational reasoning" has an established meaning in ML,
+originating with Santoro et al. (2017), who proposed Relation Networks
+(RNs) as plug-and-play modules that add explicit relation-comparison
+computations to neural network architectures (arXiv:1706.01427, NeurIPS
+2017). RNs were tested on visual question answering (CLEVR), text-based
+question answering (bAbI), and physical reasoning tasks.
+
+**This program is not an extension of the Relation Networks line of
+work.** The distinction is fundamental: Santoro et al. ask "can we
+make a network reason relationally by modifying its architecture?" We
+ask "does an existing pretrained network already represent relational
+structure internally, and does that structure carry the reasoning load?"
+The former modifies the network. The latter probes it. These are
+different questions.
+
+Our program is closer to the mechanistic interpretability tradition
+described in Section 3.1 than to the architectural relational reasoning
+tradition. The relational framing comes from a theoretical prior about
+*which* structure in activations to look for — not from an architectural
+design choice.
 
 ### 3.3 Biological convergent motivation
 
-Predictive coding (Rao & Ballard, 1999 — to be verified) independently
-motivates the relational-over-coordinate bet: in predictive coding
-frameworks, what matters is the prediction error signal (a relation
-between layers), not the absolute activation value. This is a convergent
-motivation, not a load-bearing premise.
+Predictive coding (Rao & Ballard, 1999, Nature Neuroscience 2(1):79–87,
+DOI:10.1038/4580) offers an independent biological motivation for the
+relational-over-coordinate bet. In the Rao & Ballard framework, feedback
+connections from higher to lower cortical areas carry top-down
+*predictions*, while feedforward connections carry the residual *errors*
+between those predictions and actual lower-level activity. What matters
+in the network is the error signal — the relational difference between
+prediction and observation — not the absolute activation value at any
+single neuron.
 
-*Full draft of Section 3 scheduled for Thursday 4.*
+This is structurally the same bet as the relational probe: that the
+*relation* between activations (here, across reasoning steps) carries
+more information than the absolute activation values themselves.
+
+We note this as a convergent motivation, not as a load-bearing premise.
+The probe results stand or fall on their own empirical merits,
+independent of whether predictive coding is the right model of
+biological learning.
+
 ---
 
 ## 4. The program [PLACEHOLDER]
