@@ -167,14 +167,131 @@ biological learning.
 
 ---
 
-## 4. The program [PLACEHOLDER]
+## 4. The program
 
-To be drafted Thursday 3 or 4. Will cover:
-- Milestone 1: the relational probe (full design, model selection,
-  benchmark selection, evaluation protocol).
-- Milestone 2 sketch: contingent on milestone 1 outcome.
-- Milestone 3 sketch: contingent on milestone 2 outcome.
+### 4.1 Milestone 1 — the relational probe
 
+**Status:** design complete. Implementation pending (blocked on
+TransformerLens install — requires fast internet connection).
+
+#### 4.1.1 Setup
+
+- **Model:** GPT-2 small (124M parameters), loaded via TransformerLens
+  (`HookedTransformer.from_pretrained("gpt2")`). Weights sourced from
+  HuggingFace. No fine-tuning — we probe the pretrained model as-is.
+- **Benchmark:** bAbI tasks 1–3 (Weston et al., 2015), loaded via
+  HuggingFace datasets (`facebook/babi_qa`). Tasks 1–3 cover one-hop,
+  two-hop, and three-hop reasoning respectively. Each problem consists
+  of context sentences, a question, and an answer. Supporting facts
+  (the reasoning steps necessary to answer) are explicitly labeled.
+- **Hardware:** CPU-only inference on a 12GB RAM laptop. Batch size
+  10–50 problems. Expected memory usage well under 12GB for GPT-2
+  small activation extraction. [to be confirmed on first run]
+
+#### 4.1.2 What we extract
+
+For each problem in bAbI tasks 1–3, we run GPT-2 small on the context
+sentences and extract activations at every layer using TransformerLens's
+hook points. Specifically, we extract the residual stream activations
+at each layer boundary — the vectors that represent the model's
+accumulated state after processing each token.
+
+For a problem with N supporting facts (N = 1, 2, or 3 depending on
+the task), we extract the activation vectors at the positions
+corresponding to the final token of each supporting fact sentence.
+This gives us N activation vectors per problem, one per reasoning step.
+
+#### 4.1.3 Relational features vs. coordinate features
+
+We define two families of features for each problem:
+
+**Coordinate features (baseline):** the raw activation vectors
+themselves — their absolute values at each layer. A coordinate probe
+is trained to predict reasoning-step success from these raw values.
+
+**Relational features (hypothesis):** pairwise relations between
+the N activation vectors — specifically:
+- Cosine similarity between each pair of activation vectors
+- L2 distance between each pair
+- Element-wise difference vectors between each pair
+
+A relational probe is trained to predict reasoning-step success from
+these pairwise relational features, without access to the raw
+coordinate values.
+
+The key design constraint: **the relational probe uses strictly less
+information than the coordinate probe.** If the relational probe
+matches or exceeds the coordinate probe's predictive performance, the
+central claim is supported. If it falls meaningfully short, the claim
+is falsified in its current form.
+
+#### 4.1.4 What "reasoning-step success" means operationally
+
+For each problem, GPT-2 small either produces the correct answer or
+not. We define reasoning-step success at the level of the full
+problem: a problem is "succeeded" if the model's top-1 prediction
+for the answer token matches the ground truth answer. This gives a
+binary label per problem.
+
+We split problems into succeeded and failed, then train probes to
+predict this binary label from the activation features defined above.
+Probe architecture: logistic regression (linear probe), consistent
+with the Alain & Bengio (2016) methodology.
+
+#### 4.1.5 Pre-registered prediction
+
+Stated before any probe is trained, per the commitment in Section 1.1:
+
+> A logistic regression probe trained on relational features
+> (pairwise cosine similarities, L2 distances, and difference vectors
+> between activation vectors at reasoning-step positions) will achieve
+> held-out accuracy on the succeeded/failed binary label that is
+> **within 5 percentage points** of a logistic regression probe
+> trained on the raw coordinate activation vectors, using a
+> held-out test split of 20% of the bAbI tasks 1–3 problems.
+
+The 5 percentage point threshold is the operationalization of
+"at least as well as" from Section 1.1. If the relational probe
+falls more than 5 points below the coordinate probe, the prediction
+is falsified.
+
+#### 4.1.6 Evaluation protocol
+
+- Train/test split: 80/20, stratified by task (1, 2, 3) and outcome
+  (succeeded/failed).
+- Probe: logistic regression, scikit-learn default hyperparameters.
+  No hyperparameter tuning — we use defaults to avoid overfitting the
+  probe to the data.
+- Metric: held-out accuracy (primary), ROC-AUC (secondary).
+- Reporting: both relational and coordinate probe results reported
+  regardless of outcome. Negative results reported honestly.
+
+### 4.2 Milestone 2 sketch (contingent on milestone 1)
+
+If the relational probe succeeds (relational features within 5pp of
+coordinate features): investigate *which layers* carry the relational
+signal most strongly. Use TransformerLens activation patching to test
+whether the relational substructure is causally load-bearing, not
+merely correlational.
+
+If the relational probe fails: diagnose why. Candidate explanations:
+(a) GPT-2 small does not represent relational structure at bAbI
+scale, (b) our operationalization of "relational features" is wrong,
+(c) the claim is false. Each leads to a different next step.
+
+### 4.3 Milestone 3 sketch (contingent on milestone 2)
+
+If milestone 2 finds a causally load-bearing relational substructure:
+propose a minimal architectural modification that makes this structure
+explicit. Test on a small trained-from-scratch model at toy scale.
+This is the architectural proposal deferred from Section 2.2.
+
+*Milestones 2 and 3 are contingent. Milestone 1 is the only committed
+deliverable of the current program.*
+
+---
+
+*Section 4 design finalized: Thursday 5 (2026-06-11).*
 ---
 
 ## 5. References [PLACEHOLDER]
