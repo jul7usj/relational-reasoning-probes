@@ -340,6 +340,44 @@ nothing beyond what the relational structure already captures.
   extension.
 
 ---
+### 4.5 Multi-hop extension (Thursday 10, 2026-08-06)
+
+**Configuration:** GPT-2 small, layer 11, bAbI Tasks 1 and 2, 300
+problems per task, 80/20 split, fixed-dimension features for both
+probe types (coordinate: mean-pooled activations, 768 dims;
+relational: averaged pairwise relations, 770 dims) to avoid a
+dimensionality confound across tasks.
+
+**Results:**
+
+| Task | Avg hops | Coord acc | Rel acc | Acc gap | AUC gap |
+|---|---|---|---|---|---|
+| bAbI 1 | 1.00 | 63.3% | 63.3% | +0.0pp | −0.006 |
+| bAbI 2 | 2.00 | 80.0% | 76.7% | −3.3pp | −0.061 |
+
+**Pre-registered prediction (Section 1.1):** SUPPORTED on both tasks.
+Relational probe is within 5pp of coordinate probe in both cases.
+
+**Secondary hypothesis (relational advantage grows with hop count):**
+INCONCLUSIVE. The observed direction is opposite to the hypothesis,
+but the test set is 60 examples per task. Standard error at this
+sample size is approximately ±5.6pp, so the observed 3.3pp gap is
+within one standard error of zero. This experiment lacks the
+statistical power to distinguish a real effect from sampling noise.
+
+**Unexplained observation:** both probes perform substantially better
+on Task 2 (2 hops) than Task 1 (1 hop) — 80% vs 63% for coordinate,
+76.7% vs 63.3% for relational. Harder reasoning task, more probeable
+activations. No confident explanation at present. [uncertain]
+Candidate causes: longer stories may produce greater spread in
+answer log-probability, making the median split more separable; or
+multi-hop problems may produce more distinctive activation
+signatures. Worth investigating.
+
+**Next step:** cache extracted activations to disk so probe
+experiments can be run at 2,000+ problems per task without
+recomputing activations each time. Current bottleneck is compute,
+not method.
 
 *Section 4 design finalized: Thursday 5 (2026-06-11).*
 ---
