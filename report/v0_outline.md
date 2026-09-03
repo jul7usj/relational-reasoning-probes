@@ -30,9 +30,16 @@ We pre-register the following prediction before running any experiments:
 > well as** a probe trained on the absolute activation values, while using
 > substantially fewer parameters or substantially less information.
 
-If this prediction is wrong — if the relational probe is meaningfully worse
-than the coordinate probe at matched capacity — the central claim of this
-program is falsified in its current form and must be revised.
+> **STATUS AS OF THURSDAY 13 (2026-08-20): THIS PREDICTION IS
+> FALSIFIED.** See Section 4.7. Under controls equalizing information
+> access between probes, relational features show no advantage over
+> coordinate features on any task, and a significant *disadvantage*
+> on Task 2. The rotation-invariant components of the relational
+> feature set (cosine similarity, L2 distance, and the full Gram
+> matrix) carry real but substantially weaker signal than the
+> basis-dependent representation. Sections 4.4 and 4.5 below record
+> earlier results that did not survive these controls and should be
+> read together with Section 4.7.
 
 ### 1.2 What this is and is not
 
@@ -290,6 +297,12 @@ This is the architectural proposal deferred from Section 2.2.
 deliverable of the current program.*
 
 ### 4.4 Milestone 1 results (Thursday 9, 2026-07-30)
+> **⚠ SUPERSEDED — READ SECTION 4.7 FIRST.** The result below was
+> produced with an uncontrolled comparison: the relational probe had
+> access to the question activation vector while the coordinate probe
+> did not. Section 4.7 shows this confound accounts for the effect.
+> The parity reported here is retained for the record, not as a
+> supported finding.
 
 **Configuration:** GPT-2 small (124M), bAbI Task 1, layer 11 (final
 layer), 500 problems, 80/20 train/test split, logistic regression
@@ -341,6 +354,9 @@ nothing beyond what the relational structure already captures.
 
 ---
 ### 4.5 Multi-hop extension (Thursday 10, 2026-08-06)
+> **⚠ SUPERSEDED — READ SECTION 4.7 FIRST.** These results share the
+> question-access confound described in Section 4.7. The Task 3
+> advantage reported in Section 4.6 does not survive the control.
 
 **Configuration:** GPT-2 small, layer 11, bAbI Tasks 1 and 2, 300
 problems per task, 80/20 split, fixed-dimension features for both
@@ -378,6 +394,170 @@ signatures. Worth investigating.
 experiments can be run at 2,000+ problems per task without
 recomputing activations each time. Current bottleneck is compute,
 not method.
+
+---
+
+### 4.6 K-fold cross-validation and ablation (Thursday 11–12, 2026-08-06/13)
+
+> **⚠ PARTIALLY SUPERSEDED — READ SECTION 4.7.** The Task 3 result
+> below is explained by the question-access confound. The ablation
+> finding stands.
+
+**Method improvements.** Replaced the single 80/20 split with 5-fold
+stratified cross-validation (all 1000 problems evaluated, not 200)
+and added paired bootstrap on the accuracy difference. The pairing
+matters: both probes are evaluated on identical examples, so shared
+problem difficulty cancels. Marginal confidence intervals had
+overlapped and suggested "inconclusive"; the paired test on the same
+data returned p < 0.0001.
+
+**Correction to Section 4.5.** Task 2's apparent falsification
+(−6.0pp, crossing the pre-registered 5pp threshold) was a
+single-split artifact. Under 5-fold CV the gap is −2.5pp.
+
+**Ablation of relational components (Thursday 12).** Two predictions
+were logged before running: Julien predicted the scalars (cosine,
+L2) carried the signal; Claude predicted the difference vector
+dominated.
+
+| Variant | dims | 1 hop | 2 hops | 3 hops |
+|---|---|---|---|---|
+| coord | 768 | 67.3% | 75.3% | 68.8% |
+| cos_only | 1 | 59.0% | 49.3% | 50.0% |
+| l2_only | 1 | 59.1% | 53.9% | 53.9% |
+| scalars (averaged) | 2 | 58.7% | 57.4% | 52.7% |
+| diff_only | 768 | 67.4% | 70.8% | 74.3% |
+| full_rel | 770 | 67.3% | 72.8% | 74.4% |
+
+**Finding.** `diff_only` matches `full_rel` within 0.1pp on every
+task. The averaged scalars contribute nothing detectable; cosine
+similarity on Task 3 scored 50.0% with AUC 0.500, exactly chance.
+Claude's prediction was correct.
+
+**Why this weakened the thesis.** The difference vector
+d = mean(vᵢ − vⱼ) and the coordinate feature c = mean(vᵢ) are both
+linear combinations of the same activation vectors in the same basis.
+Neither is coordinate-free. The genuinely rotation-invariant features
+were the ones that failed. The comparison was therefore never
+"relations versus coordinates" but one linear contrast versus another.
+
+**Design flaw identified.** The relational feature vector was 770
+dimensions, of which 768 were the difference vector and 2 were
+invariant scalars — each an *average* over all pairs (6 pairs on
+Task 3), collapsing 6 measurements into 1 number. The invariant
+components were never given a fair test.
+
+---
+
+### 4.7 Controls and fair comparisons (Thursday 13, 2026-08-20)
+
+Three controls were run on the existing activation cache, all with
+5-fold CV and paired bootstrap.
+
+#### 4.7.1 Question-access control — the headline result does not survive
+
+The original coordinate probe pooled only the supporting-sentence
+activations (v₁…v_k). The original relational probe used those *and*
+the question activation (q). Unequal information. `coord_with_q`
+corrects this by mean-pooling all k+1 vectors.
+
+| Task | diff_only vs coord (original) | diff_only vs coord_with_q (fair) |
+|---|---|---|
+| 1 | +0.1pp, p=0.897, ns | −0.1pp, p=0.942, ns |
+| 2 | −4.5pp, p=0.0016, **sig** | −4.7pp, p=0.0016, **sig** |
+| 3 | **+5.5pp, p=0.0004, sig** | **−0.7pp, p=0.582, ns** |
+
+**The Task 3 finding reported in Sections 4.5–4.6 was an artifact of
+question-vector access.** Mean-pooling gains 6.2pp on Task 3 simply
+from including q (68.8% → 75.0%). With equal information, `diff_only`
+(74.3%) is marginally *behind* `coord_with_q` (75.0%).
+
+Task 2 shows differencing is significantly *worse* than averaging.
+Across all three tasks with equal information: no advantage, a
+significant disadvantage, no advantage. **The thesis is falsified in
+both its strong form (Section 4.6: invariants at chance) and its weak
+form (differencing does not beat averaging).**
+
+#### 4.7.2 Repairing the invariant features
+
+The Gram matrix G_ij = ⟨vᵢ, vⱼ⟩ contains every quantity invariant
+under rotation of the basis [recalled — standard invariant theory
+result for the orthogonal group]. Cosine similarity and squared L2
+distance both derive from it:
+
+- ‖vᵢ‖² = G_ii
+- cos θ_ij = G_ij / √(G_ii · G_jj)
+- ‖vᵢ − vⱼ‖² = G_ii + G_jj − 2G_ij
+
+Task 3 invariant accuracy as the representation improves:
+
+| Representation | dims | accuracy |
+|---|---|---|
+| averaged scalars (§4.6) | 2 | 52.7% |
+| unaveraged per-pair scalars | 12 | 56.9% |
+| Gram matrix | 10 | **59.6%** |
+
+The averaging in the original design was destroying roughly 7
+percentage points of signal, and the Gram matrix outperforms
+hand-picked cosine+L2 on all three tasks (59.9 vs 58.7; 62.3 vs
+58.2; 59.6 vs 56.9).
+
+**Quantified gap.** Even repaired, rotation-invariant features reach
+~60% while full 768-dimensional features reach ~75%. Invariants
+carry real signal — clearly above the 50% chance baseline — but
+substantially less than the basis-dependent representation. **This is
+the central quantitative result of the program.**
+
+#### 4.7.3 Dimension-matched comparison
+
+To test whether invariants lose on information content or merely on
+parameter count, the difference vector was randomly projected to the
+same dimensionality as the Gram matrix.
+
+| Task | dims | gram | diff_proj | difference |
+|---|---|---|---|---|
+| 1 | 3 | 59.9% | 61.7% | −1.8pp, p=0.322, ns |
+| 2 | 6 | 62.3% | 58.6% | +3.7pp, p=0.0176 |
+| 3 | 10 | 59.6% | 59.8% | −0.2pp, p=0.957, ns |
+
+The Task 2 result favours invariants at equal dimensionality, but
+**does not survive multiple-comparison correction** (≈9 comparisons
+this session; Bonferroni threshold ≈0.0056, or 0.0167 correcting for
+three tasks only). One task in three, suggestive, not a finding.
+
+#### 4.7.4 Unpredicted observation: question representation and hop count
+
+| Task | coord | coord_with_q | gain from q |
+|---|---|---|---|
+| 1 | 67.3% | 67.5% | +0.2pp |
+| 2 | 75.3% | 75.5% | +0.2pp |
+| 3 | 68.8% | 75.0% | **+6.2pp** |
+
+The question activation is near-worthless on Tasks 1–2 and decisive
+on Task 3. Task 3 questions carry a constraint absent from the
+supporting facts — *"Where was the football **before the
+bathroom**?"* — so the supporting sentences alone are insufficient.
+[uncertain] This emerged from a control designed to test something
+else and has not been independently verified.
+
+#### 4.7.5 Program status
+
+The original thesis is falsified. Retained findings:
+
+1. Rotation-invariant activation geometry carries real but limited
+   signal (~60% vs ~75% for full-dimensional features).
+2. Feature construction matters substantially: averaging invariants
+   across pairs destroyed ~7pp of signal.
+3. The Gram matrix is the principled invariant representation and
+   outperforms hand-picked scalars on all tasks.
+4. Question representation contributes only at three hops.
+   [uncertain]
+
+Required before any publication claim: layer sweep (does the
+invariant gap hold at all depths?) and replication on a second model
+(Pythia-160M).
+
+*Section 4.7 completed: Thursday 13 (2026-08-20).*
 
 *Section 4 design finalized: Thursday 5 (2026-06-11).*
 ---
