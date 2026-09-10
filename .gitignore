@@ -216,3 +216,8 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# activation caches - derived data, regenerable via cache_all_layers.py
+# excluded because .npz files are 30-77 MB each and git stores every
+# version forever. regeneration takes ~52 min on CPU.
+milestones/*/cache/*.npz
