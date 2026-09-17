@@ -1,12 +1,16 @@
 # Report
 
-The technical report describing the research program lives here.
+The technical report for this research program.
 
-- `v0_outline.md` — current working draft. Sections 1 (thesis) and 2
-  (scope) are first-pass complete. Sections 3 (background and related
-  work), 4 (the program), and 5 (references) are placeholders to be
-  drafted in coming Thursdays.
+- `v0_outline.md` — complete. Sections 1 (thesis), 2 (scope),
+  3 (background and related work), 4 (the program and all results).
 
-The report is versioned. New versions (`v1_outline.md`, `v2_...`) will be
-created when major rewrites happen; minor edits go directly to the current
-version.
+Sections 4.4 through 4.6 are marked **superseded** — they record
+results produced before two confounds were identified and corrected
+(unequal information access between probes, and lexical contamination
+of the label). They are retained rather than deleted so the record
+shows what was believed at each stage. Sections 4.7 onward carry the
+corrections and the final results.
+
+Read Section 1.1 first: it states the original pre-registered
+prediction and flags it as falsified.
